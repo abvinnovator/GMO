@@ -15,6 +15,7 @@ const Form: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,19 +28,33 @@ const Form: React.FC = () => {
     }
   }, [location.state, navigate]);
 
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    void event
+  const handleClose = (_event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
     setOpen(false);
   };
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!name.trim()) newErrors.name = 'Name is required';
+    if (!phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const userDetails = { name, phone, email };
-    localStorage.setItem('userDetails', JSON.stringify(userDetails));
-    navigate('/second', { replace: true });
+    if (validateForm()) {
+      const userDetails = { name, phone, email };
+      localStorage.setItem('userDetails', JSON.stringify(userDetails));
+      navigate('/second', { replace: true });
+    } else {
+      setOpen(true);
+    }
   };
 
   if (localStorage.getItem('userDetails')) {
@@ -71,6 +86,8 @@ const Form: React.FC = () => {
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
+            error={!!errors.name}
+            helperText={errors.name}
           />
           <TextField
             margin="normal"
@@ -82,6 +99,8 @@ const Form: React.FC = () => {
             autoComplete="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            error={!!errors.phone}
+            helperText={errors.phone}
           />
           <TextField
             margin="normal"
@@ -93,6 +112,8 @@ const Form: React.FC = () => {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
           />
           <Button
             type="submit"
@@ -111,7 +132,7 @@ const Form: React.FC = () => {
           variant="filled"
           sx={{ width: '100%' }}
         >
-          Please fill out the form before accessing the protected page.
+          Please fill out all required fields correctly before submitting.
         </Alert>
       </Snackbar>
     </Container>
